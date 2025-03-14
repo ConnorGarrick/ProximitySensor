@@ -1,0 +1,26 @@
+Proximity sensor using HC-SR04 and Arduino Uno R3.
+When an object is within 2cm of the sensor, an alarm will sound. 
+Lights will progressively turn on the closer the object is to the sensor. 
+Volume buttons allow the user to increase and decrease the volume of the alarm.
+
+Connections:
+HC-SR04:
+Power - 5V
+Trig - PORTB0
+Echo - PORTB1
+Gnd - GND 
+
+Buzzer:
+Positive - PORTB2
+Negative - GND
+
+Volume Up Button:
+In - PORTD2
+Out - GND
+
+Volume Down Button:
+In - PORTD3
+Out - GND
+
+Lights:
+From Green to Red - PORTC0 to PORTC5
