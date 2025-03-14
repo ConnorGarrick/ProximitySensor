@@ -12,10 +12,14 @@
 #define trig_pin PB0
 #define echo_pin PB1
 
+#define buzzer PB2
+
 void usart_init(float baud);
 void usart_send_byte(unsigned char data);
 void usart_send_string(char *pstr);
 void usart_send_num(float num, char num_int, char num_decimal);
+
+void playSound(void);
 
 int main(void) {
   usart_init(9600);
@@ -26,6 +30,8 @@ int main(void) {
 
   setB(*ddr_sonar, trig_pin);
   clearB(*ddr_sonar, echo_pin);
+
+  setB(*ddr_sonar, buzzer);
 
   DDRC = 0x3F;
   PORTC = 0xFF;
@@ -72,6 +78,7 @@ int main(void) {
       }
       else {
         PORTC = 0x00;
+        playSound();
       }
     }
     else {
@@ -82,6 +89,24 @@ int main(void) {
     usart_send_num(distance, 3, 3);
     usart_send_string("\n");
     _delay_ms(200);
+  }
+}
+
+void playSound(void) {
+  float tone = 1/523.25 * 1e6;
+  int timeOn = 0.1 * tone;
+  int timeOff = tone - timeOn;
+
+  for(int i = 0; i < 2e5/tone; i++) {
+    setB(PORTB, buzzer);
+    for(int j = 0; j < timeOn; j++) {
+      _delay_us(1);
+    }
+
+    clearB(PORTB, buzzer);
+    for(int j = 0; j < timeOff; j++) {
+      _delay_us(1);
+    }
   }
 }
 
