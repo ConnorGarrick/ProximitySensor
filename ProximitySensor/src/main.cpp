@@ -4,16 +4,20 @@
 #include <math.h>
 #include <avr/interrupt.h>
 
+//functions for bit management
 #define setB(reg, i) (reg |= 1 << i)
 #define readB(reg, i) (reg >> i & 1)
 #define clearB(reg, i) (reg &= ~(1 << i))
 #define checkB(reg, i) (reg >> i & 1)
 
+//defining pins for HC-SR04 module
 #define trig_pin PB0
 #define echo_pin PB1
 
+//defining pin for buzzer
 #define buzzer PB2
 
+//defining pins for volume buttons
 #define volume_up PD2
 #define volume_down PD3
 
@@ -22,21 +26,24 @@ void usart_send_byte(unsigned char data);
 void usart_send_string(char *pstr);
 void usart_send_num(float num, char num_int, char num_decimal);
 
+//function to play alarm sound
 void warnAlarm(void);
 
+//volume of alarm
 float vol = 0.2;
 
+//handles interrupts when volume buttons are pressed
 ISR(INT0_vect) {
   _delay_ms(10);
   if(readB(PIND, volume_up) && vol <= 0.6) {
-    vol += 0.2;
+    vol += 0.2; //volume up
   }
 }
 
 ISR(INT1_vect) {
   _delay_ms(10);
   if(readB(PIND, volume_down) && vol >= 0.4) {
-    vol -= 0.2;
+    vol -= 0.2; //volume down
   }
 }
 
@@ -86,36 +93,39 @@ int main(void) {
 
     while(!checkB(*pin_sonar, echo_pin));
 
+    //waits for sound to bounce back
     while(checkB(*pin_sonar, echo_pin) && timeout--) {
       count++;
       _delay_us(1);
     }
 
+    //calculate distance
     float distance = (float)count / 1.0e6 * sndVelocity / 2. * 1000.;
 
+    //handle lights for distance
     if(distance <= 70) {
       if(distance >= 60) {
-        PORTC = 0xFE;
+        PORTC = 0xFE; //green
       }
       else if(distance >= 50) {
-        PORTC = 0xFC;
+        PORTC = 0xFC; //green
       }
       else if(distance >= 40) {
-        PORTC = 0xF8;
+        PORTC = 0xF8; //green
       }
       else if(distance >= 30) {
-        PORTC = 0xF0;
+        PORTC = 0xF0; //yellow
       }
       else if(distance >= 20) {
-        PORTC = 0xE0;
+        PORTC = 0xE0; //yellow
       }
       else {
-        PORTC = 0x00;
-        warnAlarm();
+        PORTC = 0x00; //red
+        warnAlarm(); //play alarm
       }
     }
     else {
-      PORTC = 0xFF;
+      PORTC = 0xFF; //turn lights off
     }
 
     usart_send_string(">Dmm:");
@@ -126,10 +136,11 @@ int main(void) {
 }
 
 void warnAlarm(void) {
-  float tone = 1/523.25 * 1e6;
+  float tone = 1/523.25 * 1e6; //tone of alarm
   int timeOn = vol * tone;
   int timeOff = tone - timeOn;
 
+  //plays alarm
   for(int i = 0; i < 2e5/tone; i++) {
     setB(PORTB, buzzer);
     for(int j = 0; j < timeOn; j++) {
