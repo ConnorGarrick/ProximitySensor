@@ -14,12 +14,31 @@
 
 #define buzzer PB2
 
+#define volume_up PD2
+#define volume_down PD3
+
 void usart_init(float baud);
 void usart_send_byte(unsigned char data);
 void usart_send_string(char *pstr);
 void usart_send_num(float num, char num_int, char num_decimal);
 
 void warnAlarm(void);
+
+float vol = 0.2;
+
+ISR(INT0_vect) {
+  _delay_ms(10);
+  if(readB(PIND, volume_up) && vol <= 0.6) {
+    vol += 0.2;
+  }
+}
+
+ISR(INT1_vect) {
+  _delay_ms(10);
+  if(readB(PIND, volume_down) && vol >= 0.4) {
+    vol -= 0.2;
+  }
+}
 
 int main(void) {
   usart_init(9600);
@@ -33,6 +52,12 @@ int main(void) {
 
   setB(*ddr_sonar, buzzer);
 
+  clearB(DDRD, volume_up);
+  clearB(DDRD, volume_down);
+
+  setB(PORTD, volume_up);
+  setB(PORTD, volume_down);
+
   DDRC = 0x3F;
   PORTC = 0xFF;
 
@@ -40,6 +65,14 @@ int main(void) {
 
   float sndVelocity = 343;
   uint16_t timeout = 30000;
+
+  EIMSK |= 1 << INT0;
+  EIMSK |= 1 << INT1;
+
+  EICRA |= 3 << 0;
+  EICRA |= 3 << 1;
+
+  sei();
 
   while(1) {
     count = 0;
@@ -94,7 +127,7 @@ int main(void) {
 
 void warnAlarm(void) {
   float tone = 1/523.25 * 1e6;
-  int timeOn = 0.1 * tone;
+  int timeOn = vol * tone;
   int timeOff = tone - timeOn;
 
   for(int i = 0; i < 2e5/tone; i++) {
