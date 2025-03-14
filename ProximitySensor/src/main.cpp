@@ -19,7 +19,7 @@ void usart_send_byte(unsigned char data);
 void usart_send_string(char *pstr);
 void usart_send_num(float num, char num_int, char num_decimal);
 
-void playSound(void);
+void warnAlarm(void);
 
 int main(void) {
   usart_init(9600);
@@ -78,7 +78,7 @@ int main(void) {
       }
       else {
         PORTC = 0x00;
-        playSound();
+        warnAlarm();
       }
     }
     else {
@@ -92,7 +92,7 @@ int main(void) {
   }
 }
 
-void playSound(void) {
+void warnAlarm(void) {
   float tone = 1/523.25 * 1e6;
   int timeOn = 0.1 * tone;
   int timeOff = tone - timeOn;
